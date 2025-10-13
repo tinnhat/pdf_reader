@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { DocumentLibrary } from "@/components/library/DocumentLibrary";
 import { NewDocumentForm } from "@/components/library/NewDocumentForm";
@@ -22,11 +22,51 @@ const DEFAULT_DOCUMENTS: ReaderDocument[] = [
 ];
 
 export default function HomePage() {
-  const [documents, setDocuments] = useState<ReaderDocument[]>(DEFAULT_DOCUMENTS);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | undefined>(
+  const [storedDocuments, setStoredDocuments] = useState<ReaderDocument[]>([]);
+  const documents = useMemo(
+    () => [...storedDocuments, ...DEFAULT_DOCUMENTS],
+    [storedDocuments]
+  );
+  const [activeDocumentId, setActiveDocumentId] = useState<string | undefined>(() =>
     DEFAULT_DOCUMENTS[0]?.id
   );
   const [selectedText, setSelectedText] = useState<string>("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDocuments() {
+      try {
+        const response = await fetch(`/api/documents?userId=${DEMO_USER_ID}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch documents: ${response.status}`);
+        }
+
+        const payload = (await response.json()) as ReaderDocument[];
+        if (!cancelled) {
+          setStoredDocuments(payload);
+          setActiveDocumentId((current) => {
+            if (!current) {
+              return payload[0]?.id ?? undefined;
+            }
+
+            if (current === DEFAULT_DOCUMENTS[0]?.id && payload[0]) {
+              return payload[0].id;
+            }
+
+            return current;
+          });
+        }
+      } catch (documentsError) {
+        console.error(documentsError);
+      }
+    }
+
+    loadDocuments();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const activeDocument = useMemo(
     () => documents.find((document) => document.id === activeDocumentId),
@@ -45,7 +85,7 @@ export default function HomePage() {
   });
 
   function handleDocumentCreated(document: ReaderDocument) {
-    setDocuments((current) => [document, ...current]);
+    setStoredDocuments((current) => [document, ...current]);
     setActiveDocumentId(document.id);
   }
 

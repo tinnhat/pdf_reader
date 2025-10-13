@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
+import { DEMO_USER_ID } from "@/lib/constants";
 import { ReaderDocument } from "@/lib/types";
 
 interface NewDocumentFormProps {
@@ -8,8 +9,8 @@ interface NewDocumentFormProps {
 }
 
 /**
- * Allows readers to add a PDF from their local machine. The file is held in
- * memory for the duration of the session and never leaves the browser.
+ * Allows readers to add a PDF from their local machine. The file is uploaded to
+ * MongoDB so that reading progress can be preserved across devices.
  */
 export function NewDocumentForm({ onDocumentCreated }: NewDocumentFormProps) {
   const fileInput = useRef<HTMLInputElement | null>(null);
@@ -32,22 +33,37 @@ export function NewDocumentForm({ onDocumentCreated }: NewDocumentFormProps) {
       return;
     }
 
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("userId", DEMO_USER_ID);
+    if (title.trim()) {
+      formData.set("title", title.trim());
+    }
+
     setIsSubmitting(true);
     try {
-      const buffer = new Uint8Array(await file.arrayBuffer());
-      const document: ReaderDocument = {
-        id: crypto.randomUUID(),
-        title: title || file.name.replace(/\.pdf$/i, ""),
-        source: { type: "file", data: buffer, name: file.name },
-      };
+      const response = await fetch("/api/documents", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(payload?.error ?? "UPLOAD_FAILED");
+      }
+
+      const document = (await response.json()) as ReaderDocument;
       onDocumentCreated(document);
       setTitle("");
       if (fileInput.current) {
         fileInput.current.value = "";
       }
+      setError(null);
     } catch (uploadError) {
       console.error(uploadError);
-      setError("Không thể đọc tệp, vui lòng thử lại.");
+      setError("Không thể tải tệp lên MongoDB. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
     }
@@ -59,7 +75,7 @@ export function NewDocumentForm({ onDocumentCreated }: NewDocumentFormProps) {
         Thêm tài liệu cá nhân
       </h3>
       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        Tệp chỉ được giữ trong phiên hiện tại, không tải lên máy chủ.
+        PDF sẽ được lưu vào MongoDB để bạn có thể tiếp tục đọc trên bất kỳ thiết bị nào.
       </p>
       <div className="mt-4 space-y-4">
         <label className="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">

@@ -11,4 +11,5 @@ export const DEMO_USER_ID = "demo-user";
 export const COLLECTIONS = {
   progress: "reading_progress",
   notes: "reading_notes",
+  documents: "reader_documents",
 } as const;
