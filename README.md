@@ -17,15 +17,20 @@
    - Authentication (Google Sign-In hoặc phương thức bạn muốn hỗ trợ).
    - Firestore Database (chế độ production).
    - Firebase Storage.
-2. Tạo file `.env.local` ở thư mục gốc với các biến sau:
+2. Lấy cấu hình Web App trong Firebase Console:
+   1. Mở [Firebase Console](https://console.firebase.google.com/), chọn project của bạn.
+   2. Vào **Project settings** (biểu tượng bánh răng) ➜ tab **General**.
+   3. Trong mục **Your apps**, tạo ứng dụng Web (nếu chưa có) và copy khối `firebaseConfig`.
+   4. Mỗi trường trong `firebaseConfig` tương ứng trực tiếp với các biến môi trường dưới đây.
+3. Tạo file `.env.local` ở thư mục gốc với các biến sau (dán giá trị vừa sao chép):
 
 ```bash
 NEXT_PUBLIC_FIREBASE_API_KEY="..."
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="..."
-NEXT_PUBLIC_FIREBASE_PROJECT_ID="..."
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="..."
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."
-NEXT_PUBLIC_FIREBASE_APP_ID="..."
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="..."           # firebaseConfig.projectId
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="..."       # firebaseConfig.storageBucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."  # firebaseConfig.messagingSenderId
+NEXT_PUBLIC_FIREBASE_APP_ID="..."               # firebaseConfig.appId
 LIBRETRANSLATE_URL="https://libretranslate.com"           # Có thể thay bằng self-host
 # LIBRETRANSLATE_API_KEY="..."                            # Nếu server yêu cầu API key
 ```
