@@ -63,6 +63,43 @@ const languages = [
   { code: "zh", label: "中文" },
 ];
 
+function isLikelyCorsOrNetworkError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("cors") ||
+    message.includes("preflight") ||
+    message.includes("network request failed") ||
+    message.includes("fetch")
+  );
+}
+
+function mapStorageUploadError(error: unknown): string {
+  if (error instanceof FirebaseError) {
+    switch (error.code) {
+      case "storage/unauthenticated":
+        return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại trước khi tải file.";
+      case "storage/unauthorized":
+        return "Tài khoản hiện tại không có quyền ghi vào Firebase Storage. Kiểm tra lại security rules.";
+      case "storage/canceled":
+        return "Tải file đã bị hủy.";
+      case "storage/retry-limit-exceeded":
+        return "Firebase Storage không phản hồi. Hãy kiểm tra kết nối mạng hoặc cấu hình CORS của bucket.";
+      default:
+        break;
+    }
+  }
+
+  if (isLikelyCorsOrNetworkError(error)) {
+    return "Không thể tải file do chặn CORS hoặc mạng. Thiết lập CORS cho Firebase Storage (xem README) rồi thử lại.";
+  }
+
+  return "Không thể tải file. Hãy kiểm tra quyền Storage và thử lại.";
+}
+
 function formatRelative(date?: Date | null) {
   if (!date) return "";
   const delta = Date.now() - date.getTime();
@@ -145,19 +182,28 @@ export default function Home() {
       orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(documentsQuery, (snapshot) => {
-      const docs = snapshot.docs.map((docSnapshot) => {
-        const data = docSnapshot.data();
-        return {
-          id: docSnapshot.id,
-          name: String(data.name ?? "Tài liệu"),
-          ownerId: String(data.ownerId ?? user.uid),
-          storagePath: String(data.storagePath ?? ""),
-          createdAt: timestampToDate(data.createdAt) ?? null,
-        } satisfies DocumentRecord;
-      });
-      setDocuments(docs);
-    });
+    const unsubscribe = onSnapshot(
+      documentsQuery,
+      (snapshot) => {
+        const docs = snapshot.docs.map((docSnapshot) => {
+          const data = docSnapshot.data();
+          return {
+            id: docSnapshot.id,
+            name: String(data.name ?? "Tài liệu"),
+            ownerId: String(data.ownerId ?? user.uid),
+            storagePath: String(data.storagePath ?? ""),
+            createdAt: timestampToDate(data.createdAt) ?? null,
+          } satisfies DocumentRecord;
+        });
+        setDocuments(docs);
+      },
+      (error) => {
+        console.error("Firestore documents listener error", error);
+        setStatusMessage(
+          "Không thể đồng bộ danh sách tài liệu. Kiểm tra Firestore rules, API key và App Check trước khi thử lại."
+        );
+      }
+    );
 
     return () => unsubscribe();
   }, [services?.db, user]);
@@ -196,7 +242,10 @@ export default function Home() {
       } catch (error) {
         console.error("Tải file thất bại", error);
         if (!isCancelled) {
-          setStatusMessage("Không thể lấy file PDF. Kiểm tra quyền truy cập hoặc cấu hình Firebase Storage.");
+          const message = isLikelyCorsOrNetworkError(error)
+            ? "Không thể lấy file PDF do lỗi CORS. Thiết lập CORS cho Firebase Storage rồi thử lại."
+            : "Không thể lấy file PDF. Kiểm tra quyền truy cập hoặc cấu hình Firebase Storage.";
+          setStatusMessage(message);
         }
       }
     };
@@ -217,21 +266,30 @@ export default function Home() {
     const notesRef = collection(services.db, "documents", selectedDocument.id, "notes");
     const notesQuery = query(notesRef, orderBy("createdAt", "desc"), limit(100));
 
-    const unsubscribe = onSnapshot(notesQuery, (snapshot) => {
-      const items: NoteRecord[] = snapshot.docs.map((noteDoc) => {
-        const data = noteDoc.data();
-        return {
-          id: noteDoc.id,
-          userId: String(data.userId ?? ""),
-          displayName: data.displayName ? String(data.displayName) : undefined,
-          pageNumber: typeof data.pageNumber === "number" ? data.pageNumber : undefined,
-          text: String(data.text ?? ""),
-          translatedText: data.translatedText ? String(data.translatedText) : undefined,
-          createdAt: timestampToDate(data.createdAt),
-        };
-      });
-      setNotes(items);
-    });
+    const unsubscribe = onSnapshot(
+      notesQuery,
+      (snapshot) => {
+        const items: NoteRecord[] = snapshot.docs.map((noteDoc) => {
+          const data = noteDoc.data();
+          return {
+            id: noteDoc.id,
+            userId: String(data.userId ?? ""),
+            displayName: data.displayName ? String(data.displayName) : undefined,
+            pageNumber: typeof data.pageNumber === "number" ? data.pageNumber : undefined,
+            text: String(data.text ?? ""),
+            translatedText: data.translatedText ? String(data.translatedText) : undefined,
+            createdAt: timestampToDate(data.createdAt),
+          };
+        });
+        setNotes(items);
+      },
+      (error) => {
+        console.error("Firestore notes listener error", error);
+        setStatusMessage(
+          "Không thể tải ghi chú từ Firestore. Kiểm tra quyền đọc hoặc cấu hình App Check của dự án."
+        );
+      }
+    );
 
     return () => unsubscribe();
   }, [services?.db, selectedDocument, user]);
@@ -244,24 +302,33 @@ export default function Home() {
 
     const progressRef = doc(services.db, "documents", selectedDocument.id, "users", user.uid);
 
-    const unsubscribe = onSnapshot(progressRef, (snapshot) => {
-      if (!snapshot.exists()) {
-        setLastSyncedPage(null);
-        setLastSyncedTotalPages(null);
-        setCurrentPage(1);
-        return;
-      }
+    const unsubscribe = onSnapshot(
+      progressRef,
+      (snapshot) => {
+        if (!snapshot.exists()) {
+          setLastSyncedPage(null);
+          setLastSyncedTotalPages(null);
+          setCurrentPage(1);
+          return;
+        }
 
-      const data = snapshot.data();
-      const page = typeof data.page === "number" && data.page > 0 ? data.page : 1;
-      const total = typeof data.numPages === "number" && data.numPages > 0 ? data.numPages : undefined;
-      setLastSyncedPage(page);
-      setLastSyncedTotalPages(total ?? null);
-      setCurrentPage(page);
-      if (total) {
-        setTotalPages(total);
+        const data = snapshot.data();
+        const page = typeof data.page === "number" && data.page > 0 ? data.page : 1;
+        const total = typeof data.numPages === "number" && data.numPages > 0 ? data.numPages : undefined;
+        setLastSyncedPage(page);
+        setLastSyncedTotalPages(total ?? null);
+        setCurrentPage(page);
+        if (total) {
+          setTotalPages(total);
+        }
+      },
+      (error) => {
+        console.error("Firestore progress listener error", error);
+        setStatusMessage(
+          "Không thể đồng bộ tiến độ đọc. Kiểm tra Firestore rules, quota hoặc cấu hình App Check."
+        );
       }
-    });
+    );
 
     return () => unsubscribe();
   }, [services?.db, selectedDocument, user]);
@@ -341,7 +408,7 @@ export default function Home() {
         }
       } catch (error) {
         console.error("Upload PDF error", error);
-        setStatusMessage("Không thể tải file. Hãy kiểm tra quyền Storage và thử lại.");
+        setStatusMessage(mapStorageUploadError(error));
       } finally {
         setIsUploading(false);
       }

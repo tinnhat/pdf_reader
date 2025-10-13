@@ -28,7 +28,7 @@
 NEXT_PUBLIC_FIREBASE_API_KEY="..."
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="..."
 NEXT_PUBLIC_FIREBASE_PROJECT_ID="..."           # firebaseConfig.projectId
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="..."       # firebaseConfig.storageBucket
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="..."       # firebaseConfig.storageBucket (ví dụ: pdfeader-8d28b.appspot.com)
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."  # firebaseConfig.messagingSenderId
 NEXT_PUBLIC_FIREBASE_APP_ID="..."               # firebaseConfig.appId
 LIBRETRANSLATE_URL="https://libretranslate.com"           # Có thể thay bằng self-host
@@ -36,6 +36,32 @@ LIBRETRANSLATE_URL="https://libretranslate.com"           # Có thể thay bằn
 ```
 
 > **Lưu ý:** đảm bảo cấu hình CORS và quy tắc bảo mật Firestore/Storage phù hợp với ứng dụng của bạn.
+
+### Thiết lập CORS cho Firebase Storage (khắc phục lỗi upload bị chặn)
+
+Khi upload PDF từ trình duyệt, Firebase Storage cần cho phép origin `http://localhost:3000`. Nếu gặp lỗi CORS tương tự
+`Response to preflight request doesn't pass access control check`, hãy cấu hình CORS cho bucket:
+
+1. Cài [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) và chạy `gcloud auth login`.
+2. Xuất cấu hình mẫu:
+
+   ```bash
+   cp config/storage-cors.json.template storage-cors.json
+   ```
+
+3. Mở file `storage-cors.json` vừa tạo, cập nhật trường `origin` để bao gồm tất cả domain bạn dùng (ví dụ: `http://localhost:3000`
+   và domain production).
+4. Áp dụng cấu hình cho bucket Firebase Storage (thường có dạng `<project-id>.appspot.com`):
+
+   ```bash
+   gsutil cors set storage-cors.json gs://<project-id>.appspot.com
+   ```
+
+5. Đợi vài phút rồi thử upload lại trên web app.
+
+Nếu bạn dùng nhiều môi trường, lặp lại thao tác với từng bucket tương ứng. Firebase Storage mới với domain
+`firebasestorage.app` vẫn sử dụng bucket đích `.appspot.com` nên đảm bảo biến môi trường `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+đúng với giá trị hiển thị trong Firebase Console.
 
 ## Thiết lập Firebase Authentication
 
@@ -47,6 +73,20 @@ LIBRETRANSLATE_URL="https://libretranslate.com"           # Có thể thay bằn
    - Provider đã được bật và có support email hợp lệ.
    - Domain hiện tại nằm trong danh sách Authorized domains.
    - Tệp `.env.local` sử dụng đúng thông tin `firebaseConfig` của Web App đang bật Authentication.
+
+## Khắc phục lỗi Firestore realtime (mã 400 khi Listen)
+
+Lỗi `https://firestore.googleapis.com/.../Listen` trả về `400` thường đến từ các nguyên nhân sau:
+
+1. **App Check**: nếu đã bật App Check enforcement cho Web App, cần tích hợp SDK App Check vào ứng dụng hoặc tắt enforcement cho
+   đến khi cấu hình xong.
+2. **API key restriction**: đảm bảo API key dùng trong `.env.local` cho phép domain `http://localhost:3000`.
+3. **Quy tắc Firestore**: xác nhận người dùng đăng nhập có quyền đọc/ghi qua tab **Firestore Database → Rules**.
+4. **Cloud Firestore API**: kiểm tra [Google Cloud Console](https://console.cloud.google.com/apis/library/firestore.googleapis.com)
+   để chắc chắn API đã được bật cho project.
+
+Sau khi điều chỉnh, tải lại trang và xem Console trong trình duyệt để xác minh không còn log lỗi 400. Ứng dụng cũng sẽ hiển thị
+thông báo chi tiết hơn nếu không thể kết nối Firestore realtime.
 
 ## Cài đặt & chạy dự án
 
