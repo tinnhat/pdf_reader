@@ -1,26 +1,90 @@
 @import "tailwindcss";
+@import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+@import "react-pdf/dist/esm/Page/TextLayer.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface-card: rgba(255, 255, 255, 0.85);
+  --surface-muted: rgba(226, 232, 240, 0.6);
+  --border-subtle: rgba(148, 163, 184, 0.35);
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  color-scheme: dark;
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --surface-card: rgba(15, 23, 42, 0.8);
+  --surface-muted: rgba(30, 41, 59, 0.65);
+  --border-subtle: rgba(51, 65, 85, 0.65);
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.12);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.glass-panel {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(18px);
+}
+
+.muted-card {
+  background-color: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.9rem;
+}
+
+.pdf-viewer .react-pdf__Document {
+  width: 100%;
+}
+
+.pdf-viewer-page {
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow: 0 40px 80px -40px rgba(15, 23, 42, 0.35);
+}
+
+.editor-surface {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.9rem;
+  background-color: var(--surface-card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.editor-surface:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.ProseMirror {
+  min-height: 160px;
+  padding: 0.75rem 1rem;
+  outline: none;
+}
+
+.ProseMirror > * + * {
+  margin-top: 0.75rem;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.25rem;
+}
+
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
 }

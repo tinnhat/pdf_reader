@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# My PDF Desk
 
-## Getting Started
+Ứng dụng Next.js đọc PDF cá nhân với các tính năng đồng bộ tiến độ, ghi chú và dịch văn bản theo thời gian thực. Front-end được xây dựng bằng Next.js 15, TypeScript và Tailwind CSS; backend API chạy ngay trên Next App Router và sử dụng MongoDB cho lưu trữ.
 
-First, run the development server:
+## Tính năng chính
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- 📚 **Thư viện tài liệu cá nhân**: thêm PDF từ máy người dùng hoặc dùng sẵn mẫu `sample.pdf`.
+- 📖 **Theo dõi tiến độ đọc**: đồng bộ vào MongoDB, phát luồng realtime bằng MongoDB change stream (SSE).
+- 📝 **Ghi chú rich-text**: soạn thảo ghi chú theo trang với định dạng, danh sách và chèn hình ảnh trực tiếp.
+- 🎨 **Giao diện sáng/tối**: thiết kế mới dạng kính mờ, chuyển đổi theme tức thì với `next-themes`.
+- 🌐 **Dịch nhanh**: gọi API [LibreTranslate](https://libretranslate.com/) thông qua route `/api/translate`.
+- 🧪 **Kiểm thử**: Vitest kiểm tra helper dựng payload gọi LibreTranslate.
+
+## Cấu trúc thư mục nổi bật
+
+```
+app/
+  api/                # Next.js API routes (progress, notes, translate, SSE)
+  layout.tsx
+  page.tsx            # Trang chính của ứng dụng
+components/
+  layout/
+  library/
+  notes/
+  pdf/
+  translation/
+lib/
+  repositories/       # Thao tác MongoDB
+  server/             # Helper cho API dịch
+  constants.ts, env.ts, mongodb.ts, types.ts
+hooks/
+  useReadingProgress.ts, useNotes.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mỗi file React client đều có chú thích mô tả nhiệm vụ chính.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Cấu hình môi trường
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Tạo file `.env.local` ở thư mục gốc với các biến sau:
 
-## Learn More
+```bash
+MONGODB_URI="mongodb://localhost:27017/pdf_reader"
+MONGODB_DB="pdf_reader"
+# Endpoint LibreTranslate, có thể dùng dịch vụ public hoặc tự host
+LIBRE_TRANSLATE_URL="https://libretranslate.de/translate"
+```
 
-To learn more about Next.js, take a look at the following resources:
+> 🔁 **Realtime**: Change Stream chỉ hoạt động nếu MongoDB chạy ở chế độ replica set (kể cả single-node). Xem tài liệu MongoDB để khởi động `mongod --replSet`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Thiết lập & chạy dự án
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run dev
+```
 
-## Deploy on Vercel
+- Mặc định ứng dụng lắng nghe tại `http://localhost:3000`.
+- Chọn tài liệu ở cột trái, tiến độ và ghi chú sẽ tự đồng bộ.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Kiểm thử
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Chạy toàn bộ test bằng Vitest:
+
+```bash
+npm run test
+```
+
+## Ghi chú triển khai
+
+- API `/api/progress/stream` sử dụng Server-Sent Events (SSE) để nhận thay đổi từ MongoDB change stream, giúp tiến độ cập nhật realtime giữa nhiều phiên làm việc.
+- Component `PdfReader` dùng [react-pdf](https://github.com/wojtekmaj/react-pdf). Nếu bạn triển khai trên môi trường hạn chế CSP, hãy cấu hình lại `pdfjs.GlobalWorkerOptions.workerSrc` trong component.
+- Trình soạn thảo ghi chú sử dụng TipTap với `sanitize-html` để đảm bảo nội dung chèn vào (kể cả hình ảnh) được làm sạch trước khi lưu.
+- Dịch vụ LibreTranslate không yêu cầu API key mặc định nhưng bạn nên tự triển khai hoặc cấu hình auth nếu dùng bản public.
