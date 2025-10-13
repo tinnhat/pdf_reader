@@ -35,7 +35,10 @@ LIBRETRANSLATE_URL="https://libretranslate.com"           # Có thể thay bằn
 # LIBRETRANSLATE_API_KEY="..."                            # Nếu server yêu cầu API key
 ```
 
-> **Lưu ý:** đảm bảo cấu hình CORS và quy tắc bảo mật Firestore/Storage phù hợp với ứng dụng của bạn.
+> **Lưu ý:**
+> - Biến `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` phải là **tên bucket** (kết thúc bằng `.appspot.com`) lấy từ Firebase Console.
+>   Nếu bạn dán nhầm domain tải xuống dạng `*.firebasestorage.app`, SDK sẽ báo lỗi ngay khi khởi tạo để bạn sửa lại.
+> - Đảm bảo cấu hình CORS và quy tắc bảo mật Firestore/Storage phù hợp với ứng dụng của bạn.
 
 ### Thiết lập CORS cho Firebase Storage (khắc phục lỗi upload bị chặn)
 
@@ -61,7 +64,8 @@ Khi upload PDF từ trình duyệt, Firebase Storage cần cho phép origin `htt
 
 Nếu bạn dùng nhiều môi trường, lặp lại thao tác với từng bucket tương ứng. Firebase Storage mới với domain
 `firebasestorage.app` vẫn sử dụng bucket đích `.appspot.com` nên đảm bảo biến môi trường `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-đúng với giá trị hiển thị trong Firebase Console.
+đúng với giá trị hiển thị trong Firebase Console. Khi dùng đúng SDK (`getStorage` + `uploadBytes`) và cấu hình đúng bucket,
+việc upload thông thường không cần thêm thao tác CORS thủ công.
 
 ## Thiết lập Firebase Authentication
 

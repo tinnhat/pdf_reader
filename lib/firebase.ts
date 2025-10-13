@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
@@ -12,32 +12,45 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-function createFirebaseApp() {
-  if (typeof window === "undefined") {
-    // During SSR we skip initializing Firebase.
-    return undefined;
-  }
+let firebaseApp: ReturnType<typeof initializeApp> | undefined;
+let firebaseInitError: Error | null = null;
+let authInstance: ReturnType<typeof getAuth> | undefined;
+let dbInstance: ReturnType<typeof getFirestore> | undefined;
+let storageInstance: ReturnType<typeof getStorage> | undefined;
 
-  if (!firebaseConfig.apiKey) {
-    console.warn("Missing Firebase configuration. Please set environment variables.");
-  }
+if (typeof window !== "undefined") {
+  const storageBucketValue = firebaseConfig.storageBucket;
 
-  if (!getApps().length) {
-    return initializeApp(firebaseConfig);
-  }
+  if (typeof storageBucketValue === "string" && storageBucketValue.includes(".firebasestorage.app")) {
+    firebaseInitError = new Error(
+      "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET đang sử dụng domain tải xuống (.firebasestorage.app). Hãy dùng tên bucket thực tế kết thúc bằng .appspot.com như hiển thị trong Firebase Console."
+    );
+  } else {
+    if (!firebaseConfig.apiKey) {
+      console.warn("Missing Firebase configuration. Please set environment variables.");
+    }
 
-  return getApp();
+    firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+    authInstance = getAuth(firebaseApp);
+    dbInstance = getFirestore(firebaseApp);
+    storageInstance = getStorage(firebaseApp);
+  }
 }
 
-export const firebaseApp = createFirebaseApp();
-export const auth = firebaseApp ? getAuth(firebaseApp) : undefined;
-export const db = firebaseApp ? getFirestore(firebaseApp) : undefined;
-export const storage = firebaseApp ? getStorage(firebaseApp) : undefined;
+export { firebaseApp };
+export const auth = authInstance;
+export const db = dbInstance;
+export const storage = storageInstance;
 
 export function getFirebaseClient() {
-  if (!firebaseApp || !auth || !db || !storage) {
+  if (firebaseInitError) {
+    throw firebaseInitError;
+  }
+
+  if (!firebaseApp || !authInstance || !dbInstance || !storageInstance) {
     throw new Error("Firebase has not been initialised. Ensure you are running this in the browser and environment variables are configured.");
   }
 
-  return { auth, db, storage } as const;
+  return { auth: authInstance, db: dbInstance, storage: storageInstance } as const;
 }
