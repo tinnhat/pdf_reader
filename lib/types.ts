@@ -37,8 +37,8 @@ export interface Note {
 
 /**
  * Front-end representation of a document that can be opened inside the viewer.
- * A document can either be a remote URL or a locally uploaded file that is kept
- * in memory for the current session.
+ * A document can either be a remote URL or a PDF that was uploaded by the
+ * reader and stored in MongoDB.
  */
 export interface ReaderDocument {
   id: string;
@@ -48,4 +48,4 @@ export interface ReaderDocument {
 
 export type DocumentSource =
   | { type: "url"; url: string }
-  | { type: "file"; data: Uint8Array; name: string };
+  | { type: "stored"; documentId: string; fileName: string };
