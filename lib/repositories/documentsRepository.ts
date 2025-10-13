@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import { Binary, ObjectId } from "mongodb";
 import { COLLECTIONS } from "@/lib/constants";
 import { getMongoDatabase } from "@/lib/mongodb";
 
@@ -7,7 +7,7 @@ interface DocumentRecord {
   title: string;
   fileName: string;
   mimeType: string;
-  data: Buffer;
+  data: Buffer | Binary;
   createdAt: string;
 }
 
@@ -25,6 +25,21 @@ export interface StoredDocumentFile {
   fileName: string;
   mimeType: string;
   data: Buffer;
+}
+
+function normaliseBinaryData(data: Buffer | Binary): Buffer {
+  if (data instanceof Buffer) {
+    return data;
+  }
+
+  // MongoDB stores Buffer instances as Binary. Access the underlying bytes and
+  // create a fresh Buffer so downstream consumers (e.g. the Response body)
+  // receive contiguous, uncompressed data.
+  if (data.buffer instanceof Buffer) {
+    return Buffer.from(data.buffer.subarray(0, data.length()));
+  }
+
+  return Buffer.from(data.buffer);
 }
 
 export async function listStoredDocuments(
@@ -104,6 +119,6 @@ export async function findStoredDocumentFile(
     title: document.title,
     fileName: document.fileName,
     mimeType: document.mimeType,
-    data: document.data,
+    data: normaliseBinaryData(document.data),
   };
 }

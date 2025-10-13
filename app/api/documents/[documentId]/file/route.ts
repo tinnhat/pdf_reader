@@ -25,6 +25,7 @@ export async function GET(
     headers: {
       "Content-Type": document.mimeType || "application/pdf",
       "Content-Disposition": `inline; filename="${encodeURIComponent(document.fileName)}"`,
+      "Content-Length": String(document.data.byteLength ?? document.data.length),
       "Cache-Control": "private, max-age=0, no-cache",
     },
   });
