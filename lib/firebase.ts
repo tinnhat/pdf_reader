@@ -12,6 +12,48 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+type NormalisedBucket = {
+  value?: string;
+  advisoryMessage?: string;
+};
+
+function normaliseStorageBucket(rawValue: string | undefined): NormalisedBucket {
+  if (!rawValue) {
+    return { value: undefined };
+  }
+
+  let trimmed = rawValue.trim();
+  if (!trimmed) {
+    return { value: undefined };
+  }
+
+  if (trimmed.startsWith("gs://")) {
+    trimmed = trimmed.slice("gs://".length);
+  }
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    try {
+      const url = new URL(trimmed);
+      trimmed = url.hostname;
+    } catch (error) {
+      console.warn("Không thể phân tích NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET dưới dạng URL", error);
+    }
+  }
+
+  if (trimmed.endsWith(".firebasestorage.app")) {
+    const bucketRoot = trimmed.replace(/\.firebasestorage\.app$/, "");
+    if (bucketRoot) {
+      return {
+        value: `${bucketRoot}.appspot.com`,
+        advisoryMessage:
+          "Đã tự động chuyển NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET sang tên bucket .appspot.com. Hãy cập nhật biến môi trường để tránh lỗi CORS trong các phiên tiếp theo.",
+      };
+    }
+  }
+
+  return { value: trimmed };
+}
+
 let firebaseApp: ReturnType<typeof initializeApp> | undefined;
 let firebaseInitError: Error | null = null;
 let authInstance: ReturnType<typeof getAuth> | undefined;
@@ -19,18 +61,26 @@ let dbInstance: ReturnType<typeof getFirestore> | undefined;
 let storageInstance: ReturnType<typeof getStorage> | undefined;
 
 if (typeof window !== "undefined") {
-  const storageBucketValue = firebaseConfig.storageBucket;
+  const { value: normalisedBucket, advisoryMessage } = normaliseStorageBucket(
+    firebaseConfig.storageBucket
+  );
 
-  if (typeof storageBucketValue === "string" && storageBucketValue.includes(".firebasestorage.app")) {
+  if (advisoryMessage) {
+    console.warn(advisoryMessage);
+  }
+
+  if (!normalisedBucket) {
     firebaseInitError = new Error(
-      "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET đang sử dụng domain tải xuống (.firebasestorage.app). Hãy dùng tên bucket thực tế kết thúc bằng .appspot.com như hiển thị trong Firebase Console."
+      "Không xác định được tên bucket Firebase Storage. Kiểm tra lại biến NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET."
     );
   } else {
-    if (!firebaseConfig.apiKey) {
+    const clientConfig = { ...firebaseConfig, storageBucket: normalisedBucket } as const;
+
+    if (!clientConfig.apiKey) {
       console.warn("Missing Firebase configuration. Please set environment variables.");
     }
 
-    firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    firebaseApp = getApps().length ? getApp() : initializeApp(clientConfig);
 
     authInstance = getAuth(firebaseApp);
     dbInstance = getFirestore(firebaseApp);

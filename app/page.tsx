@@ -94,7 +94,7 @@ function mapStorageUploadError(error: unknown): string {
   }
 
   if (isLikelyCorsOrNetworkError(error)) {
-    return "Không thể tải file do chặn CORS hoặc mạng. Thiết lập CORS cho Firebase Storage (xem README) rồi thử lại.";
+    return "Không thể tải file do CORS hoặc cấu hình bucket sai. Đảm bảo NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET kết thúc bằng .appspot.com rồi tải lại trang.";
   }
 
   return "Không thể tải file. Hãy kiểm tra quyền Storage và thử lại.";

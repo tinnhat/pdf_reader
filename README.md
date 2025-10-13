@@ -37,35 +37,41 @@ LIBRETRANSLATE_URL="https://libretranslate.com"           # Có thể thay bằn
 
 > **Lưu ý:**
 > - Biến `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` phải là **tên bucket** (kết thúc bằng `.appspot.com`) lấy từ Firebase Console.
->   Nếu bạn dán nhầm domain tải xuống dạng `*.firebasestorage.app`, SDK sẽ báo lỗi ngay khi khởi tạo để bạn sửa lại.
+>   Ứng dụng sẽ tự động đổi từ `*.firebasestorage.app` sang `.appspot.com`, nhưng bạn nên cập nhật lại biến môi trường để tránh lỗi CORS
+>   ở những lần khởi động khác.
 > - Đảm bảo cấu hình CORS và quy tắc bảo mật Firestore/Storage phù hợp với ứng dụng của bạn.
 
-### Thiết lập CORS cho Firebase Storage (khắc phục lỗi upload bị chặn)
+### Khắc phục lỗi upload Firebase Storage (CORS)
 
-Khi upload PDF từ trình duyệt, Firebase Storage cần cho phép origin `http://localhost:3000`. Nếu gặp lỗi CORS tương tự
-`Response to preflight request doesn't pass access control check`, hãy cấu hình CORS cho bucket:
+Việc upload dùng Firebase Web SDK (`uploadBytes`) không cần cài thêm Google Cloud CLI nếu biến môi trường đã trỏ tới
+đúng bucket `.appspot.com`. Nếu vẫn thấy thông báo CORS hoặc yêu cầu gửi preflight thất bại, hãy thực hiện theo thứ tự sau:
 
-1. Cài [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) và chạy `gcloud auth login`.
-2. Xuất cấu hình mẫu:
+1. **Kiểm tra biến môi trường:** bảo đảm `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` trùng tên bucket hiển thị tại Firebase Console
+   (dạng `<project-id>.appspot.com`). Không dùng domain tải xuống `*.firebasestorage.app`.
+2. **Tải lại ứng dụng:** sau khi chỉnh `.env.local`, dừng và khởi chạy lại `npm run dev` để cấu hình mới có hiệu lực.
+3. **Xác nhận quyền truy cập:** trong Firebase Console ➜ Storage ➜ Rules, chắc chắn người dùng đăng nhập có quyền `write`.
+4. **(Tùy chọn) Thiết lập CORS thủ công:** chỉ khi các bước trên không giải quyết được, bạn mới cần áp dụng cấu hình CORS bằng
+   Google Cloud CLI:
 
-   ```bash
-   cp config/storage-cors.json.template storage-cors.json
-   ```
+   1. Cài [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) và chạy `gcloud auth login`.
+   2. Xuất cấu hình mẫu:
 
-3. Mở file `storage-cors.json` vừa tạo, cập nhật trường `origin` để bao gồm tất cả domain bạn dùng (ví dụ: `http://localhost:3000`
-   và domain production).
-4. Áp dụng cấu hình cho bucket Firebase Storage (thường có dạng `<project-id>.appspot.com`):
+      ```bash
+      cp config/storage-cors.json.template storage-cors.json
+      ```
 
-   ```bash
-   gsutil cors set storage-cors.json gs://<project-id>.appspot.com
-   ```
+   3. Mở file `storage-cors.json` vừa tạo, cập nhật trường `origin` để bao gồm domain phát triển/production.
+   4. Áp dụng cấu hình cho bucket Firebase Storage (thường có dạng `<project-id>.appspot.com`):
 
-5. Đợi vài phút rồi thử upload lại trên web app.
+      ```bash
+      gsutil cors set storage-cors.json gs://<project-id>.appspot.com
+      ```
+
+   5. Đợi vài phút rồi thử upload lại trên web app.
 
 Nếu bạn dùng nhiều môi trường, lặp lại thao tác với từng bucket tương ứng. Firebase Storage mới với domain
-`firebasestorage.app` vẫn sử dụng bucket đích `.appspot.com` nên đảm bảo biến môi trường `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-đúng với giá trị hiển thị trong Firebase Console. Khi dùng đúng SDK (`getStorage` + `uploadBytes`) và cấu hình đúng bucket,
-việc upload thông thường không cần thêm thao tác CORS thủ công.
+`firebasestorage.app` vẫn sử dụng bucket đích `.appspot.com`, do đó khi dùng đúng SDK (`getStorage` + `uploadBytes`) và
+cấu hình đúng bucket, bạn thường không cần thiết lập CORS thủ công.
 
 ## Thiết lập Firebase Authentication
 
