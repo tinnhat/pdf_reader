@@ -37,6 +37,17 @@ LIBRETRANSLATE_URL="https://libretranslate.com"           # Có thể thay bằn
 
 > **Lưu ý:** đảm bảo cấu hình CORS và quy tắc bảo mật Firestore/Storage phù hợp với ứng dụng của bạn.
 
+## Thiết lập Firebase Authentication
+
+1. Trong Firebase Console, mở phần **Build → Authentication → Sign-in method**.
+   - Bật nhà cung cấp **Google** (hoặc các provider khác mà bạn dùng) và thiết lập **Support email** bắt buộc.
+2. Ở cùng trang, kéo xuống mục **Authorized domains** và thêm `localhost` (cho môi trường phát triển) cùng bất kỳ domain triển khai thực tế nào.
+3. Nếu sử dụng Google Sign-In, truy cập **Project settings → General → Your apps → Web App** và đảm bảo giá trị `App nickname` cùng `App ID` hiển thị (điều này xác nhận web app đã đăng ký thành công).
+4. Khi gặp lỗi `FirebaseError: auth/configuration-not-found`, hãy kiểm tra lại:
+   - Provider đã được bật và có support email hợp lệ.
+   - Domain hiện tại nằm trong danh sách Authorized domains.
+   - Tệp `.env.local` sử dụng đúng thông tin `firebaseConfig` của Web App đang bật Authentication.
+
 ## Cài đặt & chạy dự án
 
 ```bash

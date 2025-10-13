@@ -8,6 +8,7 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
 import {
   Timestamp,
   addDoc,
@@ -418,7 +419,13 @@ export default function Home() {
       await signInWithPopup(services.auth, provider);
     } catch (error) {
       console.error("Sign in error", error);
-      setStatusMessage("Không thể đăng nhập. Hãy kiểm tra cấu hình OAuth.");
+      if (error instanceof FirebaseError && error.code === "auth/configuration-not-found") {
+        setStatusMessage(
+          "Firebase Authentication chưa bật nhà cung cấp Google hoặc thiếu Authorized domains. Kiểm tra mục Authentication → Sign-in method."
+        );
+      } else {
+        setStatusMessage("Không thể đăng nhập. Hãy kiểm tra cấu hình OAuth.");
+      }
     }
   };
 
