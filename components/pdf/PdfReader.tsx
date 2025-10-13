@@ -53,7 +53,11 @@ export function PdfReader({
     if (source.type === "url") {
       return source.url;
     }
-    return { data: source.data };
+    if (source.type === "stored") {
+      return `/api/documents/${source.documentId}/file`;
+    }
+    const exhaustiveCheck: never = source;
+    return exhaustiveCheck;
   }, [source]);
 
   function handleLoadSuccess({ numPages: detectedPages }: { numPages: number }) {

@@ -45,7 +45,7 @@ export function DocumentLibrary({
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {document.source.type === "url"
                     ? "Đường dẫn từ máy chủ"
-                    : `Tệp nội bộ: ${document.source.name}`}
+                    : `Đã tải lên: ${document.source.fileName}`}
                 </p>
               </button>
             </li>
