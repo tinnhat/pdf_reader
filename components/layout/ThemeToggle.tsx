@@ -4,10 +4,6 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { MoonStar, Sun } from "lucide-react";
 
-/**
- * Small toggle button to switch between the light and dark themes. It keeps a
- * mounted state to avoid hydration mismatches when rendering on the server.
- */
 export function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);

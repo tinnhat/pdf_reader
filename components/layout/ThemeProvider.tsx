@@ -7,10 +7,6 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-/**
- * Wraps `next-themes` to provide a class-based light/dark switcher that can be
- * consumed across the entire application.
- */
 export function ThemeProvider({ children }: ThemeProviderProps) {
   return (
     <NextThemeProvider
