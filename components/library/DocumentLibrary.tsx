@@ -8,10 +8,6 @@ interface DocumentLibraryProps {
   onSelect: (documentId: string) => void;
 }
 
-/**
- * Renders the list of available documents. The component highlights the
- * currently active entry and allows users to quickly swap between PDFs.
- */
 export function DocumentLibrary({
   documents,
   activeDocumentId,
