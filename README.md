@@ -7,8 +7,7 @@ context in a single place.
 
 ## Key Features
 
-- 📚 **Personal document library** – Upload any PDF or start with the bundled
-  `sample.pdf`. Files are persisted in MongoDB along with metadata such as the
+- 📚 **Personal document library** – Files are persisted in MongoDB along with metadata such as the
   last opened page and title.
 - 📖 **Reading progress sync** – Reading positions are stored per document and
   propagated over Server-Sent Events. Whether the reader is on another tab or a
@@ -106,14 +105,4 @@ Run the Vitest suite:
 ```bash
 npm run test
 ```
-
-## Deployment Notes
-
-- Configure the `TRANSLATE_URI` to point to your preferred Lingva instance or a
-  trusted translation provider to avoid rate limiting.
-- When deploying on platforms with strict CSP, ensure the React PDF worker is
-  served from an allowed origin. If necessary set
-  `pdfjs.GlobalWorkerOptions.workerSrc` inside `PdfReader`.
-- MongoDB Atlas supports change streams out of the box for replica set and
-  sharded clusters.
 

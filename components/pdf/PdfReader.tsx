@@ -130,6 +130,7 @@ export function PdfReader({
             width={800}
             renderAnnotationLayer
             renderTextLayer
+            
           />
         </Document>
         {loadError ? (
