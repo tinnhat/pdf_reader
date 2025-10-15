@@ -13,7 +13,7 @@ export async function listNotes(
     .find({ userId, documentId })
     .sort({ createdAt: -1 });
   const results = await cursor.toArray();
-  return results.map((note) => ({
+  return results.map((note: any) => ({
     ...note,
     content: note.content ?? note.text ?? "",
     plainText: note.plainText ?? note.text ?? "",
@@ -26,7 +26,7 @@ export async function createNote(note: Omit<Note, "createdAt" | "_id"> & {
 }): Promise<Note> {
   const db = await getMongoDatabase();
   const createdAt = note.createdAt ?? new Date().toISOString();
-  const result = await db.collection<Note>(COLLECTIONS.notes).insertOne({
+  const result: any = await db.collection<Note>(COLLECTIONS.notes).insertOne({
     ...note,
     plainText: note.plainText ?? note.text ?? "",
     createdAt,

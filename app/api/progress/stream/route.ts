@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         const pushEvent = (
-          change: ChangeStreamDocument<ReadingProgress>
+          change: any | ChangeStreamDocument<ReadingProgress>
         ) => {
           if (!change.fullDocument) return;
           const payload = mapChangeStreamDocument(change.fullDocument);
