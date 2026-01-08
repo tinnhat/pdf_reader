@@ -116,7 +116,7 @@ export function PdfReader({
       </div>
       <div
         ref={containerRef}
-        className='pdf-viewer flex flex-1 justify-center overflow-auto bg-slate-100/80 p-6 dark:bg-slate-950'
+        className="pdf-viewer flex flex-1 justify-center overflow-y-auto overflow-x-hidden bg-slate-100/80 p-6 dark:bg-slate-950 h-full"
       >
         <Document
           file={reactPdfSource}
@@ -127,7 +127,6 @@ export function PdfReader({
           <Page
             className='pdf-viewer-page shadow-lg shadow-black/50'
             pageNumber={pageNumber}
-            width={800}
             renderAnnotationLayer
             renderTextLayer
             

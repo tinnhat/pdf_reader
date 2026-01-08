@@ -1,13 +1,12 @@
-"use client";
-
 import { Note } from "@/lib/types";
 
 interface NoteListProps {
   notes: Note[];
   isLoading?: boolean;
+  onGoToNote: (note: Note) => void;
 }
 
-export function NoteList({ notes, isLoading }: NoteListProps) {
+export function NoteList({ notes, isLoading, onGoToNote }: NoteListProps) {
   if (isLoading) {
     return (
       <div className="muted-card p-4 text-sm text-slate-600 dark:text-slate-300">
@@ -32,7 +31,7 @@ export function NoteList({ notes, isLoading }: NoteListProps) {
           className="glass-panel p-5 text-sm text-slate-700 dark:text-slate-200"
         >
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            <span className="inline-flex items-center gap-2 rounded-full bg-sky-100/60 px-2.5 py-1 font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-200">
+            <span className="inline-flex items-center gap-2 rounded-full bg-sky-100/60 px-2.5 py-1 font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-200 cursor-pointer" onClick={() => onGoToNote(note)}>
               {note.page ? `Trang ${note.page}` : "Ghi chú chung"}
             </span>
             <time dateTime={note.createdAt} className="font-mono">

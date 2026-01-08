@@ -1,5 +1,3 @@
-"use client";
-
 import { ReaderDocument } from "@/lib/types";
 
 interface DocumentLibraryProps {
@@ -19,9 +17,6 @@ export function DocumentLibrary({
         <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
           Thư viện PDF
         </h2>
-        <p className="mt-1 text-xs text-slate-500/80 dark:text-slate-400">
-          Chọn nhanh tài liệu bạn muốn tiếp tục.
-        </p>
       </div>
       <ul className="space-y-3">
         {documents.map((document) => {
@@ -41,7 +36,7 @@ export function DocumentLibrary({
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {document.source.type === "url"
                     ? "Đường dẫn từ máy chủ"
-                    : `Đã tải lên: ${document.source.fileName}`}
+                    : `File: ${document.source.fileName}`}
                 </p>
               </button>
             </li>

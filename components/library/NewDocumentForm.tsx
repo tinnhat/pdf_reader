@@ -1,5 +1,3 @@
-"use client";
-
 import { FormEvent, useRef, useState } from "react";
 import { DEMO_USER_ID } from "@/lib/constants";
 import { ReaderDocument } from "@/lib/types";
@@ -72,14 +70,11 @@ export function NewDocumentForm({ onDocumentCreated }: NewDocumentFormProps) {
   return (
     <form onSubmit={handleSubmit} className="glass-panel p-5 text-sm text-slate-600 dark:text-slate-200">
       <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-        Thêm tài liệu cá nhân
+        Thêm file PDF mới
       </h3>
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        PDF sẽ được lưu vào MongoDB để bạn có thể tiếp tục đọc trên bất kỳ thiết bị nào.
-      </p>
       <div className="mt-4 space-y-4">
-        <label className="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Tiêu đề tùy chọn
+        <label className="block text-xs tracking-wide text-slate-500 dark:text-slate-400">
+          Tên hiển thị (tùy chọn)
           <input
             type="text"
             value={title}
@@ -89,7 +84,6 @@ export function NewDocumentForm({ onDocumentCreated }: NewDocumentFormProps) {
           />
         </label>
         <label className="block text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Tệp PDF
           <input
             ref={fileInput}
             type="file"

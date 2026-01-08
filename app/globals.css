@@ -53,6 +53,14 @@ body {
   border-radius: 1.25rem;
   overflow: hidden;
   box-shadow: 0 40px 80px -40px rgba(15, 23, 42, 0.35);
+  width: 100%;
+  max-width: 800px; 
+  margin: 0 auto;
+}
+
+.pdf-viewer-page canvas {
+  width: 100% !important;
+  height: auto !important;
 }
 
 .editor-surface {

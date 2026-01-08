@@ -7,7 +7,6 @@ import { NewDocumentForm } from '@/components/library/NewDocumentForm'
 import { PdfReader } from '@/components/pdf/PdfReader'
 import { NoteComposer } from '@/components/notes/NoteComposer'
 import { NoteList } from '@/components/notes/NoteList'
-import { TranslationPanel } from '@/components/translation/TranslationPanel'
 import { ReaderDocument } from '@/lib/types'
 import { DEMO_USER_ID } from '@/lib/constants'
 import { useReadingProgress } from '@/hooks/useReadingProgress'
@@ -85,6 +84,12 @@ export default function HomePage() {
     setActiveDocumentId(document.id)
   }
 
+  function onGoToNote(note: { page?: number }) { {
+    if (note.page && activeDocument) {
+      updateProgress({ page: note.page, totalPages: progress?.totalPages || 0 })
+    }
+  } }
+
   return (
     <div className='flex min-h-screen flex-col'>
       <AppHeader />
@@ -97,45 +102,11 @@ export default function HomePage() {
               onSelect={setActiveDocumentId}
             />
             <NewDocumentForm onDocumentCreated={handleDocumentCreated} />
-            <TranslationPanel selectedText={selectedText} />
-          </div>
-          {activeDocument ? (
-            <PdfReader
-              documentId={activeDocument.id}
-              title={activeDocument.title}
-              source={activeDocument.source}
-              progress={progress}
-              onProgressCommit={updateProgress}
-              onTextSelected={setSelectedText}
-            />
-          ) : (
-            <div className='glass-panel flex items-center justify-center rounded-2xl border-dashed border-slate-300/60 bg-white/70 p-10 text-center text-slate-500 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-300'>
-              <div>
-                <p className='text-base font-medium'>Chưa có tài liệu được chọn</p>
-                <p className='mt-1 text-sm'>Thêm PDF mới hoặc chọn từ thư viện để bắt đầu.</p>
-              </div>
-            </div>
-          )}
-        </section>
-        <section className='grid gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'>
-          <div className='space-y-6'>
-            <NoteComposer
-              onCreate={async note => {
-                if (!activeDocument) return
-                await addNote(note)
-              }}
-              defaultPage={progress?.page}
-            />
-            <NoteList notes={notes} isLoading={isNotesLoading} />
-          </div>
-          <div className='glass-panel space-y-4 p-5 text-sm text-slate-600 dark:text-slate-200'>
+             <div className='glass-panel space-y-4 p-5 text-sm text-slate-600 dark:text-slate-200'>
             <div>
               <h3 className='text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400'>
                 Tiến độ đọc
-              </h3>
-              <p className='mt-1 text-xs text-slate-500/80 dark:text-slate-400'>
-                Đồng bộ tức thì từ MongoDB qua SSE.
-              </p>
+              </h3>             
             </div>
             {isProgressLoading ? (
               <p className='text-xs text-slate-500'>Đang tải tiến độ...</p>
@@ -160,6 +131,37 @@ export default function HomePage() {
               <p className='text-xs text-slate-500'>Chưa có dữ liệu tiến độ nào.</p>
             )}
           </div>
+          </div>
+          {activeDocument ? (
+            <PdfReader
+              documentId={activeDocument.id}
+              title={activeDocument.title}
+              source={activeDocument.source}
+              progress={progress}
+              onProgressCommit={updateProgress}
+              onTextSelected={setSelectedText}
+            />
+          ) : (
+            <div className='glass-panel flex items-center justify-center rounded-2xl border-dashed border-slate-300/60 bg-white/70 p-10 text-center text-slate-500 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-300'>
+              <div>
+                <p className='text-base font-medium'>Chưa có tài liệu được chọn</p>
+                <p className='mt-1 text-sm'>Thêm PDF mới hoặc chọn từ thư viện để bắt đầu.</p>
+              </div>
+            </div>
+          )}
+        </section>
+        <section className='w-full'>
+          <div className='space-y-6'>
+            <NoteComposer
+              onCreate={async note => {
+                if (!activeDocument) return
+                await addNote(note)
+              }}
+              defaultPage={progress?.page}
+            />
+            <NoteList notes={notes} isLoading={isNotesLoading} onGoToNote={onGoToNote} />
+          </div>
+         
         </section>
       </main>
     </div>

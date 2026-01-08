@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "My PDF Desk",
   description:
-    "Ứng dụng Next.js đọc PDF cá nhân với đồng bộ tiến độ, ghi chú và dịch văn bản.",
+    "Project đọc PDF cá nhân với đồng bộ tiến độ, ghi chú và dịch văn bản.",
 };
 
 export default function RootLayout({
