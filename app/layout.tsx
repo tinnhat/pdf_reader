@@ -12,12 +12,17 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
 export const metadata: Metadata = {
-  title: "My PDF Desk",
-  description:
-    "Project đọc PDF cá nhân với đồng bộ tiến độ, ghi chú và dịch văn bản.",
+  title: 'PDF Reader',
+  description: 'Đọc PDF online với tính năng lưu tiến độ.',
+  keywords: ['PDF', 'Reader', 'Document Viewer', 'Next.js'],
+  authors: [{ name: 'Nguyễn Nhật Tín' }],
+  robots: 'index, follow',
+  icons: [
+    { rel: 'icon', url: '/favicon.ico' },
+  ]
 };
+
 
 export default function RootLayout({
   children,

@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://nt-pdf-reader.vercel.app/
+
+# Sitemaps
+Sitemap: https://nt-pdf-reader.vercel.app/sitemap.xml
