@@ -98,8 +98,39 @@ export function PdfReader({
     return () => element.removeEventListener('mouseup', handleMouseUp)
   }, [onTextSelected])
 
+  const [pageWidth, setPageWidth] = useState<number | undefined>(undefined)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const updateWidth = () => {
+      const rawWidth = el.clientWidth - 10 //padding 10px on each side
+      const safeWidth = Math.max(0, rawWidth)
+      setPageWidth(Math.min(1000, safeWidth))
+    }
+
+    updateWidth()
+
+    let observer: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => updateWidth())
+      observer.observe(el)
+    } else {
+      window.addEventListener('resize', updateWidth)
+    }
+
+    return () => {
+      if (observer) {
+        observer.disconnect()
+      } else {
+        window.removeEventListener('resize', updateWidth)
+      }
+    }
+  }, [])
+
   return (
-    <section className='glass-panel flex h-screen flex-1 flex-col overflow-hidden text-slate-900 dark:text-slate-100'>
+    <section className='glass-panel flex flex-1 flex-col overflow-hidden text-slate-900 dark:text-slate-100'>
       <div className='flex flex-col gap-3 border-b border-slate-200/60 px-2 py-2 dark:border-slate-800/60'>
         <div className='flex items-center justify-between text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400'>
           <span>Tiến độ</span>
@@ -116,28 +147,32 @@ export function PdfReader({
       </div>
       <div
         ref={containerRef}
-        className="pdf-viewer flex flex-1 justify-center overflow-y-auto overflow-x-hidden bg-slate-100/80 p-6 dark:bg-slate-950 h-full"
+        className='pdf-viewer flex flex-1 justify-center overflow-y-auto overflow-x-hidden bg-slate-100/80 p-6 dark:bg-slate-950 h-full'
       >
         <Document
           file={reactPdfSource}
           onLoadSuccess={handleLoadSuccess}
           onLoadError={handleLoadError}
-          className='flex justify-center'
+          className='flex w-full justify-center'
         >
-          <Page
-            className='pdf-viewer-page shadow-lg shadow-black/50'
-            pageNumber={pageNumber}
-            renderAnnotationLayer
-            renderTextLayer
-            
-          />
+          {pageWidth && (
+            <Page
+              className='pdf-viewer-page shadow-lg shadow-black/50'
+              pageNumber={pageNumber}
+              width={pageWidth}
+              renderAnnotationLayer
+              renderTextLayer
+            />
+          )}
         </Document>
+
         {loadError ? (
           <p className='mt-6 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300'>
             {loadError}
           </p>
         ) : null}
       </div>
+
       <div className='flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-300 px-4 py-3'>
         <button
           type='button'
