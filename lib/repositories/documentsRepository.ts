@@ -123,3 +123,24 @@ export async function findStoredDocumentFile(
     data: normaliseBinaryData(document.data),
   }
 }
+
+export async function deleteStoredDocument(
+  userId: string,
+  documentId: string
+): Promise<boolean> {
+  const db = await getMongoDatabase()
+  const collection = db.collection<DocumentRecord>(COLLECTIONS.documents)
+  let objectId: ObjectId
+  try {
+    objectId = new ObjectId(documentId)
+  } catch {
+    return false
+  }
+
+  const result = await collection.deleteOne({
+    _id: objectId,
+    userId,
+  })
+
+  return result.deletedCount > 0
+}

@@ -39,6 +39,10 @@ export function PdfReader({
     if (progress) {
       setNumPages(progress.totalPages)
       setPageNumber(progress.page)
+    } else {
+      // Reset to defaults when no progress exists (new document)
+      setNumPages(0)
+      setPageNumber(1)
     }
   }, [documentId, progress?.page, progress?.totalPages])
 

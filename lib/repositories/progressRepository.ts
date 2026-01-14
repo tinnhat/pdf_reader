@@ -50,6 +50,21 @@ export async function upsertProgress(
 }
 
 /**
+ * Deletes all progress entries for a specific document.
+ */
+export async function deleteProgressByDocumentId(
+  userId: string,
+  documentId: string
+): Promise<number> {
+  const db = await getMongoDatabase();
+  const result = await db.collection<ReadingProgress>(COLLECTIONS.progress).deleteMany({
+    userId,
+    documentId,
+  });
+  return result.deletedCount;
+}
+
+/**
  * Utility that converts change stream payloads into plain progress objects.
  */
 export function mapChangeStreamDocument(
