@@ -42,3 +42,54 @@ export async function createNote(note: Omit<Note, "createdAt" | "_id"> & {
     createdAt,
   };
 }
+
+export async function deleteNotesByDocumentId(
+  userId: string,
+  documentId: string
+): Promise<number> {
+  const db = await getMongoDatabase();
+  const result = await db.collection<Note>(COLLECTIONS.notes).deleteMany({
+    userId,
+    documentId,
+  });
+  return result.deletedCount;
+}
+
+export async function deleteNoteById(
+  userId: string,
+  noteId: string
+): Promise<boolean> {
+  const db = await getMongoDatabase();
+  const result = await db.collection<Note>(COLLECTIONS.notes).deleteOne({
+    _id: new ObjectId(noteId) as any,
+    userId,
+  });
+  return result.deletedCount > 0;
+}
+
+export async function updateNote(
+  userId: string,
+  noteId: string,
+  updates: Partial<Pick<Note, "content" | "plainText" | "page">>
+): Promise<Note | null> {
+  const db = await getMongoDatabase();
+  const result = await db.collection<Note>(COLLECTIONS.notes).findOneAndUpdate(
+    { _id: new ObjectId(noteId) as any, userId },
+    {
+      $set: {
+        ...updates,
+        plainText: updates.plainText ?? updates.content ?? "",
+      },
+    },
+    { returnDocument: "after" }
+  );
+
+  if (!result) return null;
+
+  return {
+    ...result,
+    _id: typeof result._id === 'string' ? result._id : (result._id as ObjectId).toHexString(),
+    content: result.content ?? result.text ?? "",
+    plainText: result.plainText ?? result.text ?? "",
+  };
+}

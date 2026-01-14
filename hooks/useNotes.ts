@@ -57,10 +57,60 @@ export function useNotes({ documentId, userId }: UseNotesOptions) {
     [documentId, userId, mutate]
   );
 
+  const editNote = useCallback(
+    async (noteId: string, content: string, page?: number) => {
+      const response = await fetch(`/api/notes/${noteId}?userId=${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          page,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json();
+        throw new Error(payload.error ?? "Unable to update note");
+      }
+
+      const updated = (await response.json()) as Note;
+      mutate((current) =>
+        current?.map((note) => (note._id === noteId ? updated : note)) ?? [],
+        {
+          revalidate: false,
+        }
+      );
+    },
+    [userId, mutate]
+  );
+
+  const deleteNote = useCallback(
+    async (noteId: string) => {
+      const response = await fetch(`/api/notes/${noteId}?userId=${userId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const payload = await response.json();
+        throw new Error(payload.error ?? "Unable to delete note");
+      }
+
+      mutate((current) =>
+        current?.filter((note) => note._id !== noteId) ?? [],
+        {
+          revalidate: false,
+        }
+      );
+    },
+    [userId, mutate]
+  );
+
   return {
     notes: data ?? [],
     isLoading,
     error,
     addNote,
+    editNote,
+    deleteNote,
   };
 }

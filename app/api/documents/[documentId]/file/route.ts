@@ -10,7 +10,8 @@ function resolveUserId(request: NextRequest, explicitUserId?: string | null) {
 }
 
 export async function GET(request: NextRequest, context: any) {
-  const { documentId } = context.params
+  const params = await context.params
+  const { documentId } = params
   const userId = resolveUserId(request, request.nextUrl.searchParams.get('userId'))
   const document = await findStoredDocumentFile(userId, documentId)
 

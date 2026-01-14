@@ -73,6 +73,8 @@ export default function HomePage() {
   const {
     notes,
     addNote,
+    editNote,
+    deleteNote,
     isLoading: isNotesLoading,
   } = useNotes({
     documentId: activeDocument?.id,
@@ -82,6 +84,31 @@ export default function HomePage() {
   function handleDocumentCreated(document: ReaderDocument) {
     setStoredDocuments(current => [document, ...current])
     setActiveDocumentId(document.id)
+  }
+
+  async function handleDocumentDelete(documentId: string) {
+    try {
+      const response = await fetch(`/api/documents/${documentId}?userId=${DEMO_USER_ID}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const payload = await response.json();
+        throw new Error(payload.error ?? "Unable to delete document");
+      }
+
+      // Remove from local state
+      setStoredDocuments(current => current.filter(doc => doc.id !== documentId));
+
+      // If the deleted document was active, switch to another one
+      if (activeDocumentId === documentId) {
+        const remainingDocs = storedDocuments.filter(doc => doc.id !== documentId);
+        setActiveDocumentId(remainingDocs[0]?.id);
+      }
+    } catch (error) {
+      console.error("Failed to delete document:", error);
+      alert("Không thể xóa tài liệu. Vui lòng thử lại.");
+    }
   }
 
   function onGoToNote(note: { page?: number }) { {
@@ -100,6 +127,7 @@ export default function HomePage() {
               documents={documents}
               activeDocumentId={activeDocumentId}
               onSelect={setActiveDocumentId}
+              onDelete={handleDocumentDelete}
             />
             <NewDocumentForm onDocumentCreated={handleDocumentCreated} />
              <div className='glass-panel space-y-4 p-5 text-sm text-slate-600 dark:text-slate-200'>
@@ -159,7 +187,13 @@ export default function HomePage() {
               }}
               defaultPage={progress?.page}
             />
-            <NoteList notes={notes} isLoading={isNotesLoading} onGoToNote={onGoToNote} />
+            <NoteList 
+              notes={notes} 
+              isLoading={isNotesLoading} 
+              onGoToNote={onGoToNote}
+              onEdit={editNote}
+              onDelete={deleteNote}
+            />
           </div>
          
         </section>
